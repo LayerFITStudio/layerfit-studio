@@ -1,0 +1,1814 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { loadStripe } from "@stripe/stripe-js";
+
+import logo3D from "./assets/layerfit-logo-3d.png";
+import gripBlack from "./assets/grip-black.png";
+import gripBlue from "./assets/grip-blue.png";
+import gripNeonGreen from "./assets/grip-neon-green.png";
+import gripRed from "./assets/grip-red.png";
+import gripPink from "./assets/grip-pink.png";
+import fairwayBlack from "./assets/fairway-black.png";
+import fairwayBlue from "./assets/fairway-blue.png";
+import fairwayGrey from "./assets/fairway-grey.png";
+import fairwayPink from "./assets/fairway-pink.png";
+import standardGripPlaceholder from "./assets/standard-grip-placeholder.png";
+import bulgeGripPlaceholder from "./assets/bulge-grip-placeholder.png";
+import fatGripPlaceholder from "./assets/fat-grip-placeholder.png";
+import printerImage from "./assets/ps2-printer.jpg";
+import homeGripsImage from "./assets/home-page-grips.png";
+import fairway6packImage from "./assets/fairway_6_pack.jpg";
+import gripDimensions from "./assets/grip_dimensions.png";
+import fairway6Dimensions from "./assets/fairway6_dimensions.png";
+import gripInitials from "./assets/grip_initials.png";
+// ---------- INITIAL DATA ----------
+
+const categories = [
+  {
+    id: "Sports",
+    label: "Sports",
+    tagline: "Sport Accesories",
+    description:
+      "Custom 3D-printed sporting accesories.",
+  },
+  {
+    id: "handicap",
+    label: "Handicap",
+    tagline: "Coming soon",
+    description: "Adaptive solutions designed to reduce everyday friction.",
+  },
+  {
+    id: "household",
+    label: "Household",
+    tagline: "Coming soon",
+    description: "Simple, smart 3D-printed helpers for everyday life.",
+  },
+];
+const fairwayColorOptions = [
+  { value: "black", label: "Black", image: fairwayBlack },
+  { value: "blue", label: "Blue", image: fairwayBlue },
+  { value: "grey", label: "Grey", image: fairwayGrey },
+  { value: "pink", label: "Pink", image: fairwayPink },
+];
+
+const initialProducts = [
+  {
+    id: 1,
+    name: "Standard Grip",
+    slug: "standard-grip",
+    basePrice: 31,
+    category: "Sports",
+    description:
+      "Our classic LayerFIT cable attachment with a precision-contoured profile for all-purpose pulling movements.",
+    images: [standardGripPlaceholder, gripDimensions, gripInitials],
+  },
+  {
+    id: 2,
+    name: "Bulge Grip",
+    slug: "bulge-grip",
+    basePrice: 33,
+    category: "Sports",
+    description:
+      "A thicker mid-section to light up your forearms and biceps while keeping your wrists in a comfortable position.",
+    images: [bulgeGripPlaceholder, gripDimensions, gripInitials],
+  },
+  {
+    id: 3,
+    name: "Fat Grip",
+    slug: "fat-grip",
+    basePrice: 35,
+    category: "Sports",
+    description:
+      "Our heaviest-hitting grip. Oversized diameter for maximum forearm and grip development on any cable stack.",
+    images: [fatGripPlaceholder, gripDimensions, gripInitials],
+  },
+  {
+  id: 4,
+  name: "Fairway 6 Pack",
+  slug: "fairway-6-pack",
+  basePrice: 26.99,
+  category: "Sports",
+  description:
+    "A compact 3D-printed golf ball holder designed to keep six balls organized and ready on the course.",
+  images: [fairway6packImage, fairway6Dimensions],
+  colors: fairwayColorOptions,
+},
+];
+
+const colorOptions = [
+  { value: "black", label: "Black", image: gripBlack },
+  { value: "red", label: "Red", image: gripRed },
+  { value: "blue", label: "Blue", image: gripBlue },
+  { value: "neon-green", label: "Neon Green", image: gripNeonGreen },
+  { value: "pink", label: "Pink", image: gripPink },
+];
+const allColorOptions = [...colorOptions, ...fairwayColorOptions];
+
+const FLAT_SHIPPING = 0;
+
+// ---------- ROOT APP ----------
+
+export default function App() {
+const [page, setPage] = useState("home");
+const [activeCategory, setActiveCategory] = useState("Sports");
+const [products, setProducts] = useState(initialProducts);
+const [cartItems, setCartItems] = useState([]);
+const [selectedProduct, setSelectedProduct] = useState(null);
+const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+
+  if (params.get("success") === "true") {
+    setShowSuccessMessage(true);
+
+    // remove ?success=true from URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // auto-hide after 5 seconds
+    setTimeout(() => {
+      setShowSuccessMessage(false);
+    }, 5000);
+  }
+}, []);
+  // Simple admin auth (local only, password hardcoded for now)
+  const [isAdminAuthed, setIsAdminAuthed] = useState(() => {
+    try {
+      return window.localStorage.getItem("lf_admin_ok") === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  const handleAdminLogin = (password) => {
+    // TODO: replace with real auth later
+    if (password === "layerfit2025!") {
+      setIsAdminAuthed(true);
+      try {
+        window.localStorage.setItem("lf_admin_ok", "1");
+      } catch {
+        // ignore
+      }
+      setPage("admin");
+      return true;
+    }
+    return false;
+  };
+
+  const handleAdminLogout = () => {
+    setIsAdminAuthed(false);
+    try {
+      window.localStorage.removeItem("lf_admin_ok");
+    } catch {
+      // ignore
+    }
+    setPage("home");
+  };
+
+  const handleAddToCart = (productId, color, initials, quantity) => {
+    const product = products.find((p) => p.id === productId);
+    if (!product) return;
+
+   if (!color || (product.slug !== "fairway-6-pack" && !initials)) {
+  alert("Please choose a color and enter initials.");
+  return;
+}
+
+    const qty = Math.max(1, quantity || 1);
+
+    const existingIndex = cartItems.findIndex(
+      (item) =>
+        item.product.id === productId &&
+        item.color === color &&
+        item.initials.toUpperCase() === initials.toUpperCase()
+    );
+
+    if (existingIndex !== -1) {
+      const updated = [...cartItems];
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        quantity: updated[existingIndex].quantity + qty,
+      };
+      setCartItems(updated);
+    } else {
+      setCartItems([
+        ...cartItems,
+        {
+          id: Date.now(),
+          product,
+          color,
+          initials: initials.toUpperCase(),
+          quantity: qty,
+        },
+      ]);
+    }
+  };
+
+  const handleUpdateCartQuantity = (itemId, quantity) => {
+    const qty = Math.max(1, quantity || 1);
+    setCartItems((items) =>
+      items.map((item) =>
+        item.id === itemId ? { ...item, quantity: qty } : item
+      )
+    );
+  };
+
+  const handleRemoveCartItem = (itemId) => {
+    setCartItems((items) => items.filter((item) => item.id !== itemId));
+  };
+
+  const handleUpdateProductPrice = (id, newPrice) => {
+    const priceNumber = parseFloat(newPrice);
+    if (Number.isNaN(priceNumber) || priceNumber <= 0) return;
+    setProducts((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, basePrice: priceNumber } : p))
+    );
+  };
+
+  const handleAddNewProduct = (product) => {
+    setProducts((prev) => [
+      ...prev,
+      {
+        ...product,
+        id: Date.now(),
+      },
+    ]);
+  };
+const stripePromise = loadStripe("pk_live_51TIXdQIfqkJlqWH137eNwttJjLX7Dt8rrDzcucH4K16jTSf51v4Etf8u6IN1BkM4SDJusAypfeANi7STuKqLynqd00EMHQvJE0");
+
+const handleStripeCheckout = async () => {
+  console.log("clicked");
+
+  const stripe = await stripePromise;
+
+  const response = await fetch("http://localhost:4242/create-checkout-session", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      items: cartItems,
+    }),
+  });
+
+  const session = await response.json();
+
+window.location.href = session.url;
+};
+  const subtotal = useMemo(
+    () =>
+      cartItems.reduce(
+        (sum, item) => sum + item.product.basePrice * item.quantity,
+        0
+      ),
+    [cartItems]
+  );
+
+  // Simple estimated tax (flat 8% just for display; real tax will use Stripe / backend)
+  const estimatedTax = subtotal * 0.08;
+  const totalWithShipping = subtotal + FLAT_SHIPPING + estimatedTax;
+
+  return (
+    <div className="app-root">
+      <SiteHeader
+        currentPage={page}
+        setPage={setPage}
+        cartCount={cartItems.length}
+        isAdminAuthed={isAdminAuthed}
+      />
+
+      <main className="site-main">
+      {showSuccessMessage && (
+  <div
+    style={{
+      background: "#1f3b2d",
+      color: "#ffffff",
+      padding: "20px 18px",
+      lineHeight: "1.5",
+      borderRadius: "10px",
+      marginTop: "20px",
+      marginBottom: "20px",
+      textAlign: "center",
+      fontWeight: 600,
+    }}
+  >
+  >
+    Payment successful! You will receive an email confirmation shortly.
+  </div>
+)}
+        {page === "home" && (
+          <HomePage
+            setPage={setPage}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+          />
+        )}
+
+        {page === "shop" && (
+          <ShopPage
+            products={products}
+            activeCategory={activeCategory}
+            onAddToCart={handleAddToCart}
+            onBackToHome={() => setPage("home")}
+          />
+        )}
+
+        {page === "about" && <AboutPage />}
+        {page === "contact" && <ContactPage />}
+
+       
+  {page === "cart" && (
+  <CartPage
+    items={cartItems}
+    subtotal={subtotal}
+    estimatedTax={estimatedTax}
+    shipping={FLAT_SHIPPING}
+    total={totalWithShipping}
+    onUpdateQuantity={handleUpdateCartQuantity}
+    onRemoveItem={handleRemoveCartItem}
+    onCheckout={() => {
+      if (cartItems.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+      handleStripeCheckout();
+    }}
+  />
+)}
+        {page === "checkout" && (
+          <CheckoutPage
+            items={cartItems}
+            subtotal={subtotal}
+            estimatedTax={estimatedTax}
+            shipping={FLAT_SHIPPING}
+            total={totalWithShipping}
+            onBackToCart={() => setPage("cart")}
+            onOrderPlaced={() => {
+              // In a real app, this would happen after Stripe confirms payment.
+              setCartItems([]);
+              setPage("confirmation");
+            }}
+          />
+        )}
+
+        {page === "confirmation" && (
+          <OrderConfirmationPage onBackHome={() => setPage("home")} />
+        )}
+
+        {page === "admin-login" && !isAdminAuthed && (
+          <AdminLogin onLogin={handleAdminLogin} />
+        )}
+
+        {page === "admin" &&
+          (isAdminAuthed ? (
+            <AdminPage
+              products={products}
+              onUpdatePrice={handleUpdateProductPrice}
+              onAddProduct={handleAddNewProduct}
+              onLogout={handleAdminLogout}
+            />
+          ) : (
+            <AdminLogin onLogin={handleAdminLogin} />
+          ))}
+
+        {page === "privacy" && <PrivacyPolicyPage />}
+        {page === "terms" && <TermsPage />}
+        {page === "shipping" && <ShippingPolicyPage />}
+        {page === "refunds" && <ReturnsRefundsPage />}
+      </main>
+
+      <SiteFooter setPage={setPage} />
+    </div>
+  );
+}
+
+// ---------- HEADER & FOOTER ----------
+
+function SiteHeader({ currentPage, setPage, cartCount, isAdminAuthed }) {
+  const navLink = (id, label, extraProps = {}) => (
+    <button
+      key={id}
+      onClick={() => setPage(id)}
+      className={
+        "nav-link" + (currentPage === id ? " nav-link--active" : "")
+      }
+      {...extraProps}
+    >
+      {label}
+    </button>
+  );
+
+  return (
+    <header className="site-header">
+      <div className="header-inner">
+        <div className="brand">
+          <div className="brand-logo">
+            <img
+              src={logo3D}
+              alt="LayerFIT Studio logo"
+              className="brand-logo-image"
+            />
+          </div>
+          <div>
+            <h1 className="brand-title">LayerFIT Studio</h1>
+            <p className="brand-subtitle">
+              Personalized 3D-printed solutions.
+            </p>
+          </div>
+        </div>
+
+        <nav className="main-nav">
+          {navLink("home", "Home")}
+          {navLink("shop", "Shop")}
+          {navLink("about", "About")}
+          {navLink("contact", "Contact")}
+
+
+          <button onClick={() => setPage("cart")} className="nav-cart">
+            <span>Cart</span>
+            {cartCount > 0 && (
+              <span className="nav-cart-badge">{cartCount}</span>
+            )}
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function SiteFooter({ setPage }) {
+  return (
+    <footer className="site-footer">
+      <div className="footer-inner">
+        <div>
+          <span>
+            © {new Date().getFullYear()} LayerFIT Studio. All rights reserved.
+          </span>
+          <div className="footer-tagline">Built for lifters, by lifters.</div>
+        </div>
+        <div className="footer-links">
+          <button onClick={() => setPage("privacy")} className="nav-link">
+            Privacy
+          </button>
+          <button onClick={() => setPage("terms")} className="nav-link">
+            Terms
+          </button>
+          <button onClick={() => setPage("shipping")} className="nav-link">
+            Shipping
+          </button>
+          <button onClick={() => setPage("refunds")} className="nav-link">
+            Returns &amp; Refunds
+          </button>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ---------- HOME PAGE ----------
+
+function HomePage({ setPage, activeCategory, setActiveCategory }) {
+  return (
+    <section className="home-grid home-grid--single">
+      <div className="home-copy">
+        <p className="home-kicker">3D-Printed Cable Attachments</p>
+
+        <h2 className="home-title">
+          Innovative Solutions Solved & Printed 1 Layer at a time.
+        </h2>
+
+        <p className="home-lead">
+          LayerFIT Studio custom-prints everything to your specs: model,
+          color, and your initials etched right into the solution. Designed 
+          and manufactured here in the USA.
+        </p>
+
+        <div className="home-actions">
+          <button onClick={() => setPage("shop")} className="btn btn-primary">
+            Shop Sports
+          </button>
+          <button onClick={() => setPage("about")} className="btn btn-ghost">
+            Our Story
+          </button>
+        </div>
+
+        {/* Category tiles */}
+        <div className="home-category-grid">
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              className={
+                "home-category-card" +
+                (activeCategory === cat.id ? " home-category-card--active" : "")
+              }
+              onClick={() => {
+                setActiveCategory(cat.id);
+                if (cat.id === "Sports") {
+                  setPage("shop");
+                }
+              }}
+            >
+              <div className="home-category-header">
+                <span className="home-category-label">{cat.label}</span>
+                <span className="home-category-tagline">{cat.tagline}</span>
+              </div>
+              <p className="home-category-description">{cat.description}</p>
+            </button>
+          ))}
+        </div>
+
+        <p className="home-note">
+          Start with Sports today — Handicap and Household products are coming
+          soon.
+        </p>
+
+        {/* 3D Printer + Grips Section (Side-by-side, Grip Preview Style) */}
+        <div style={{ marginTop: "40px" }}>
+          <p className="home-kicker" style={{ marginBottom: "10px" }}>
+            In-House Manufacturing
+          </p>
+
+          <div className="home-preview">
+            <div className="home-preview-glow" />
+            <div className="home-preview-card">
+              <div style={{ display: "grid", gap: "20px" }}>
+                <h3 className="home-feature-title" style={{ margin: 0 }}>
+                  Built in our studio. Designed for real training.
+                </h3>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(260px, 1fr))",
+                    gap: "20px",
+                    alignItems: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      borderRadius: "18px",
+                      overflow: "hidden",
+                      border: "1px solid #1f2937",
+                    }}
+                  >
+                    <img
+                      src={printerImage}
+                      alt="LayerFIT Studio 3D Printer"
+                      style={{
+                        width: "100%",
+                        maxWidth: "400px",
+                        display: "block",
+                        margin: "0 auto",
+                      }}
+                    />
+                  </div>
+
+                  <div
+                    style={{
+                      borderRadius: "18px",
+                      overflow: "hidden",
+                      border: "1px solid #1f2937",
+                    }}
+                  >
+                    <img
+                      src={homeGripsImage}
+                      alt="LayerFIT Grip lineup"
+                      style={{
+                        width: "100%",
+                        maxWidth: "400px",
+                        display: "block",
+                        margin: "0 auto",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <p className="home-feature-text" style={{ margin: 0 }}>
+                  Every LayerFIT grip is printed in our studio using precision
+                  3D manufacturing technology — giving us full control over
+                  quality, durability, and personalization from start to finish.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+function AboutPage() {
+  return (
+    <section className="home-grid home-grid--single">
+      <div className="home-copy">
+        <p className="home-kicker">About LayerFIT Studio</p>
+
+        <h2 className="home-title">Solving real gym problems, one layer at a time.</h2>
+
+        <p className="home-lead">
+          LayerFIT Studio was started by lifelong training partners who were tired of
+          mismatched, worn-out cable attachments at the gym. We design and 3D-print
+          custom cable grips that actually fit your hands, your training style, and
+          your personality.
+        </p>
+
+        <div style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
+          <p className="home-note">
+            • Personalized grips with your initials, color choice, and grip style.
+          </p>
+          <p className="home-note">
+            • Designed by lifters with decades of training experience – not a catalog.
+          </p>
+          <p className="home-note">
+            • Printed in-house on high-precision 3D printers for repeatable quality.
+          </p>
+        </div>
+
+        <div style={{ marginTop: "24px" }}>
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              // In the main App, setPage is controlled there,
+              // so we just guide users via the nav for now.
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            Back to Top
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
+function ContactPage() {
+  const [formData, setFormData] = React.useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+  const [status, setStatus] = React.useState("idle"); // "idle" | "submitting" | "success" | "error"
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("submitting");
+
+    const payload = {
+      // 👇 put your CONTACT access key here (the one tied to support@layerfitstudio.com)
+      access_key: "0a52da56-079c-4c8f-9798-9ba04e356045",
+      name: formData.name,
+      email: formData.email,
+      message: formData.message,
+      subject: "New contact message - LayerFIT Studio",
+      from_name: "LayerFIT Studio Website",
+    };
+
+    try {
+      const res = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setStatus("success");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        console.error("Web3Forms contact error:", data);
+        setStatus("error");
+      }
+    } catch (err) {
+      console.error("Web3Forms contact network error:", err);
+      setStatus("error");
+    }
+  };
+
+  return (
+    <section className="text-section">
+      <h2 className="text-section-title">Contact LayerFIT Studio</h2>
+      <p className="text-section-p">
+        Have a question about custom grips, bulk orders, or something else?
+        Use the form below and we&apos;ll get back to you as soon as we can.
+      </p>
+
+      <form className="contact-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label className="form-label" htmlFor="contact-name">
+            Name
+          </label>
+          <input
+            id="contact-name"
+            name="name"
+            className="text-input"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="contact-email">
+            Email
+          </label>
+          <input
+            id="contact-email"
+            type="email"
+            name="email"
+            className="text-input"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label className="form-label" htmlFor="contact-message">
+            Message
+          </label>
+          <textarea
+            id="contact-message"
+            name="message"
+            className="text-input"
+            rows={4}
+            value={formData.message}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="btn btn-primary"
+          disabled={status === "submitting"}
+        >
+          {status === "submitting" ? "Sending..." : "Send Message"}
+        </button>
+
+        {status === "success" && (
+          <p className="form-success">
+            Thanks for reaching out! Your message has been sent.
+          </p>
+        )}
+        {status === "error" && (
+          <p className="form-error">
+            Something went wrong. Please try again or email
+            {" "}
+            support@layerfitstudio.com
+            {" "}
+            directly.
+          </p>
+        )}
+      </form>
+    </section>
+  );
+}
+
+// ---------- SHOP / PRODUCT CARD ----------
+
+function ShopPage({ products, activeCategory, onAddToCart, onBackToHome }) {
+  const visibleProducts = products.filter(
+    (p) => p.category === activeCategory
+  );
+
+  return (
+    <section className="shop-section">
+      <div className="shop-header">
+        <div>
+          <h2 className="shop-title">Shop Cable Grips</h2>
+          <p className="shop-lead">
+            Choose your grip style, pick your color, and add your initials.
+            Every pair is printed to order in our studio.
+          </p>
+          <p className="shop-note">
+            Product photos are placeholders. Final images will be updated as the
+            line evolves.
+          </p>
+        </div>
+
+        <div>
+          <button className="btn btn-ghost" onClick={onBackToHome}>
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+
+      {visibleProducts.length === 0 ? (
+        <p className="shop-note">
+          No products in this category yet. Check back soon.
+        </p>
+      ) : (
+        <div className="product-grid">
+          {visibleProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAddToCart={onAddToCart}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ProductCard({ product, onAddToCart }) {
+  const [color, setColor] = useState("black");
+  const [initials, setInitials] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+
+  const currentColor =
+    colorOptions.find((c) => c.value === color) || colorOptions[0];
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onAddToCart(product.id, color, initials.trim(), quantity);
+  };
+
+  return (
+    <>
+      <article className="product-card">
+        <div className="product-card-top">
+          <div className="product-image-wrapper">
+  <img
+    src={product.images[0]}
+    alt={product.name}
+    className="product-image"
+    onClick={() => setSelectedImageIndex(0)}
+    style={{ cursor: "pointer" }}
+  />
+</div>
+
+<p className="product-image-note">
+  Choose your color below •{" "}
+  <span style={{ color: "#ffffff", fontWeight: 600 }}>
+    Click image to view
+    {product.slug === "fairway-6-pack"
+      ? " dimensions"
+      : " dimensions & personalization"}
+  </span>
+</p>
+          <h3 className="product-name">{product.name}</h3>
+          <p className="product-description">{product.description}</p>
+
+          <p className="product-price">
+            ${product.basePrice.toFixed(2)}
+            <span className="product-price-note">
+              {" "}
+              {product.slug === "fairway-6-pack"
+                ? "(includes 3 tees & carabiner)"
+                : "(per pair • includes carabiner)"}
+            </span>
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="product-form">
+          <div className="form-group">
+            <label className="form-label">Color</label>
+
+            <div className="color-picker-row">
+              <div className="color-pill-row">
+                {(product.colors || colorOptions).map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setColor(c.value)}
+                    className={
+                      "color-pill" +
+                      (color === c.value ? " color-pill--active" : "")
+                    }
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="color-sample">
+                <img
+                  src={currentColor.image}
+                  alt={`${currentColor.label} color sample`}
+                  className="color-sample-image"
+                />
+              </div>
+            </div>
+          </div>
+
+          {product.slug !== "fairway-6-pack" && (
+            <div className="form-group">
+              <label className="form-label">
+                Initials <span className="form-label-hint">(2–4 letters)</span>
+              </label>
+              <input
+                className="text-input text-input--small"
+                value={initials}
+                onChange={(e) => setInitials(e.target.value.toUpperCase())}
+                maxLength={4}
+              />
+            </div>
+          )}
+
+          <div className="product-form-bottom">
+            <div className="form-group">
+              <label className="form-label">Qty</label>
+              <input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) =>
+                  setQuantity(parseInt(e.target.value, 10) || 1)
+                }
+                className="text-input text-input--small"
+              />
+            </div>
+
+            <button type="submit" className="btn btn-primary btn-block">
+              Add to Cart
+            </button>
+          </div>
+        </form>
+      </article>
+
+      {selectedImageIndex !== null && (
+        <div
+          className="image-lightbox"
+          onClick={() => setSelectedImageIndex(null)}
+        >
+          <div
+            className="image-lightbox-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="image-lightbox-close"
+              type="button"
+              onClick={() => setSelectedImageIndex(null)}
+            >
+              ×
+            </button>
+
+            <img
+              src={product.images[selectedImageIndex]}
+              alt={product.name}
+              className="image-lightbox-image"
+            />
+
+            <p style={{ marginTop: "10px", textAlign: "center", color: "#ccc" }}>
+              {selectedImageIndex === 0
+                ? "Product View"
+                : selectedImageIndex === 1
+                ? "Dimensions"
+                : "Initials Example"}
+            </p>
+
+            <div className="image-nav-buttons">
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedImageIndex((prev) => {
+                    const current = prev ?? 0;
+                    return current === 0
+                      ? product.images.length - 1
+                      : current - 1;
+                  })
+                }
+              >
+                Previous
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedImageIndex((prev) => {
+                    const current = prev ?? 0;
+                    return current >= product.images.length - 1
+                      ? 0
+                      : current + 1;
+                  })
+                }
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+          
+
+// ---------- CART & CHECKOUT ----------
+
+function CartPage({
+  items,
+  subtotal,
+  estimatedTax,
+  shipping,
+  total,
+  onUpdateQuantity,
+  onRemoveItem,
+  onCheckout,
+}) {
+  if (items.length === 0) {
+    return (
+      <section className="cart-empty">
+        <h2 className="cart-title">Your Cart</h2>
+        <p className="cart-empty-text">
+          No grips in your cart yet. Hit the shop and build your first custom
+          handle.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="cart-section">
+      <h2 className="cart-title">Your Cart</h2>
+
+      <div className="cart-items">
+        {items.map((item) => (
+          <div key={item.id} className="cart-item">
+            <div className="cart-item-main">
+              <p className="cart-item-name">{item.product.name}</p>
+              <p className="cart-item-meta">
+                Color:{" "}
+                {
+                  (allColorOptions.find((c) => c.value === item.color) || {}).label
+                }
+                {" • "}Initials: {item.initials}
+              </p>
+            </div>
+            <div className="cart-item-controls">
+              <div className="cart-qty-group">
+                <span className="cart-qty-label">Qty</span>
+                <input
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  onChange={(e) =>
+                    onUpdateQuantity(
+                      item.id,
+                      parseInt(e.target.value, 10) || 1
+                    )
+                  }
+                  className="text-input text-input--small"
+                />
+              </div>
+              <div className="cart-item-price-block">
+                <p className="cart-item-price">
+                  ${(item.product.basePrice * item.quantity).toFixed(2)}
+                </p>
+                <button
+                  onClick={() => onRemoveItem(item.id)}
+                  className="cart-remove"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="cart-summary">
+        <div>
+          <p className="cart-summary-row">
+            <span>Subtotal</span>
+            <span>${subtotal.toFixed(2)}</span>
+          </p>
+          <p className="cart-summary-row">
+            <span>Estimated tax (8%)</span>
+            <span>${estimatedTax.toFixed(2)}</span>
+          </p>
+          <p className="cart-summary-row">
+            <span>Free shipping</span>
+            <span>${shipping.toFixed(2)}</span>
+          </p>
+        </div>
+
+        <div className="cart-summary-total-row">
+          <span>Total (estimate)</span>
+          <span>${total.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <p className="cart-note">
+        Currently shipping within the USA only. Please allow 7–10 days for
+        manufacturing and shipping.
+      </p>
+
+      <button className="btn btn-primary btn-block" onClick={onCheckout}>
+        Proceed to Checkout
+      </button>
+    </section>
+  );
+}
+
+function CheckoutPage({
+  items,
+  subtotal,
+  estimatedTax,
+  shipping,
+  total,
+  onBackToCart,
+  onOrderPlaced,
+}) {
+  const [orderStatus, setOrderStatus] = React.useState("idle"); // "idle" | "submitting" | "success" | "error"
+  if (items.length === 0) {
+    return (
+      <section className="cart-empty">
+        <h2 className="cart-title">Checkout</h2>
+        <p className="cart-empty-text">
+          Your cart is empty. Add some grips before checking out.
+        </p>
+      </section>
+    );
+  }
+
+  const handlePlaceOrder = async (e) => {
+  e.preventDefault();
+  if (!items || items.length === 0) return;
+
+  setOrderStatus("submitting");
+
+  // Collect form data automatically
+  const formData = new FormData(e.target);
+
+  const customerName = formData.get("fullName") || "";
+  const customerEmail = formData.get("email") || "";
+  const street = formData.get("street") || "";
+  const city = formData.get("city") || "";
+  const state = formData.get("state") || "";
+  const zip = formData.get("zip") || "";
+
+  const itemsSummary = items
+    .map((item) => {
+      const colorLabel =
+  (allColorOptions.find((c) => c.value === item.color) || {}).label ||
+  item.color;
+
+      return [
+        item.product.name,
+        `Qty: ${item.quantity}`,
+        item.initials ? `Initials: ${item.initials}` : null,
+        colorLabel ? `Color: ${colorLabel}` : null,
+        `Unit: $${item.product.basePrice.toFixed(2)}`,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+    })
+    .join("\n");
+
+  const customerSummary = `
+Name: ${customerName}
+Email: ${customerEmail}
+Address:
+  ${street}
+  ${city}, ${state} ${zip}
+`.trim();
+
+  const payload = {
+    // 👇 REPLACE this key with your real ORDERS access key
+    access_key: "c8923cdf-d51f-4e53-a66b-1a80c382abe5",
+
+    subject: "New LayerFIT Studio Order",
+    from_name: "LayerFIT Studio Website",
+
+    // For customer confirmation
+    email: customerEmail,
+    name: customerName,
+
+    // Full message sent to orders@layerfitstudio.com
+    message: `New order received from LayerFIT Studio.\n\nCustomer:\n${customerSummary}\n\nItems:\n${itemsSummary}\n\nSubtotal: $${subtotal.toFixed(
+      2
+    )}\nEstimated Tax: $${estimatedTax.toFixed(
+      2
+    )}\nShipping: $${shipping.toFixed(
+      2
+    )}\nTotal: $${total.toFixed(2)}`,
+  };
+
+  try {
+    const res = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      setOrderStatus("success");
+
+      // Trigger your existing confirmation screen
+      if (onOrderPlaced) {
+        onOrderPlaced();
+      }
+    } else {
+      console.error("Web3Forms order error:", data);
+      setOrderStatus("error");
+    }
+  } catch (err) {
+    console.error("Web3Forms order network error:", err);
+    setOrderStatus("error");
+  }
+};
+
+  return (
+    <section className="checkout-section">
+      <h2 className="cart-title">Checkout</h2>
+
+      <div className="checkout-grid">
+        <form className="checkout-form" onSubmit={handlePlaceOrder}>
+          <h3 className="checkout-subtitle">Shipping Details</h3>
+
+          <div className="form-group">
+  <label className="form-label">Full Name</label>
+  <input
+    name="fullName"
+    className="text-input"
+    required
+  />
+</div>
+
+<div className="form-group">
+  <label className="form-label">Email</label>
+  <input
+    type="email"
+    name="email"
+    className="text-input"
+    required
+  />
+</div>
+
+<div className="form-group">
+  <label className="form-label">Street Address</label>
+  <input
+    name="street"
+    className="text-input"
+    required
+  />
+</div>
+
+<div className="form-row">
+  <div className="form-group">
+    <label className="form-label">City</label>
+    <input
+      name="city"
+      className="text-input"
+      required
+    />
+  </div>
+  <div className="form-group">
+    <label className="form-label">State</label>
+    <input
+      name="state"
+      className="text-input"
+      maxLength={2}
+      required
+    />
+  </div>
+  <div className="form-group">
+    <label className="form-label">ZIP</label>
+    <input
+      name="zip"
+      className="text-input"
+      maxLength={10}
+      required
+    />
+  </div>
+</div>
+
+          <h3 className="checkout-subtitle">Payment (Demo)</h3>
+          <p className="checkout-note">
+            In the live site, this section will be powered by Stripe. For now,
+            this form is for layout only and does not charge your card.
+          </p>
+
+          <div className="form-group">
+            <label className="form-label">Card Number</label>
+            <input
+              className="text-input"
+              placeholder="1234 1234 1234 1234"
+            />
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Expiry</label>
+              <input className="text-input" placeholder="MM/YY" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">CVC</label>
+              <input className="text-input" placeholder="123" />
+            </div>
+          </div>
+
+          <button type="submit" className="btn btn-primary btn-block">
+            Place Order (Demo)
+          </button>
+
+          <button
+            type="button"
+            className="btn btn-ghost btn-block"
+            onClick={onBackToCart}
+          >
+            Back to Cart
+          </button>
+        </form>
+
+        <aside className="checkout-summary">
+          <h3 className="checkout-subtitle">Order Summary</h3>
+
+          <ul className="checkout-items">
+            {items.map((item) => (
+              <li key={item.id} className="checkout-item">
+                <div>
+                  <p className="checkout-item-name">{item.product.name}</p>
+                  <p className="checkout-item-meta">
+                    {item.quantity} × ${item.product.basePrice.toFixed(2)} •{" "}
+                    {item.initials} •{" "}
+                    {
+                      (allColorOptions.find((c) => c.value === item.color) || {}).label
+                    }
+                  </p>
+                </div>
+                <p className="checkout-item-price">
+                  ${(item.product.basePrice * item.quantity).toFixed(2)}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="checkout-totals">
+            <p>
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </p>
+            <p>
+              <span>Estimated tax (8%)</span>
+              <span>${estimatedTax.toFixed(2)}</span>
+            </p>
+            <p>
+              <span>Free shipping</span>
+              <span>${shipping.toFixed(2)}</span>
+            </p>
+            <p className="checkout-total-row">
+              <span>Total</span>
+              <span>${total.toFixed(2)}</span>
+            </p>
+          </div>
+
+          <p className="cart-note">
+            Currently shipping within the USA only. Please allow 7–10 days for
+            manufacturing and shipping.
+          </p>
+        </aside>
+      </div>
+    </section>
+  );
+}
+
+function OrderConfirmationPage({ onBackHome }) {
+  return (
+    <section className="cart-empty">
+      <h2 className="cart-title">Order Placed (Demo)</h2>
+      <p className="cart-empty-text">
+        In the live site, you&apos;ll see your real confirmation number here
+        after Stripe processes payment.
+      </p>
+      <button className="btn btn-primary" onClick={onBackHome}>
+        Back to Home
+      </button>
+    </section>
+  );
+}
+
+// ---------- ADMIN ----------
+
+function AdminLogin({ onLogin }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const ok = onLogin(password);
+    if (!ok) {
+      setError("Incorrect password. Please try again.");
+    }
+  };
+
+  return (
+    <section className="admin-section">
+      <div className="admin-header">
+        <div>
+          <h2 className="admin-title">Admin Login</h2>
+          <p className="admin-lead">
+            Protected area for managing products and pricing. This login is
+            local-only for now.
+          </p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="admin-form admin-block--form">
+        <div className="form-group">
+          <label className="form-label">Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="text-input"
+            placeholder="Enter admin password"
+          />
+        </div>
+        {error && <p className="cart-empty-text">{error}</p>}
+        <button type="submit" className="btn btn-primary">
+          Log In
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function AdminPage({ products, onUpdatePrice, onAddProduct, onLogout }) {
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [price, setPrice] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Sports");
+
+  const handleAdd = (e) => {
+    e.preventDefault();
+    if (!name || !price) return;
+
+    const basePrice = parseFloat(price);
+    if (Number.isNaN(basePrice) || basePrice <= 0) return;
+
+    onAddProduct({
+      name,
+      slug: slug || name.toLowerCase().replace(/\s+/g, "-"),
+      basePrice,
+      description,
+      category,
+    });
+
+    setName("");
+    setSlug("");
+    setPrice("");
+    setDescription("");
+    setCategory("Sports");
+  };
+
+  return (
+    <section className="admin-section">
+      <div className="admin-header">
+        <div>
+          <h2 className="admin-title">Admin</h2>
+          <p className="admin-lead">
+            This is a demo admin panel that updates your product catalog in
+            memory. In production, these controls will connect to a database.
+          </p>
+        </div>
+        <button className="btn btn-ghost" onClick={onLogout}>
+          Log Out
+        </button>
+      </div>
+
+      <div className="admin-block">
+        <h3 className="admin-block-title">Existing Products</h3>
+        <div className="admin-table-wrapper">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Slug</th>
+                <th>Category</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((p) => (
+                <tr key={p.id}>
+                  <td>{p.name}</td>
+                  <td className="admin-table-slug">{p.slug}</td>
+                  <td className="admin-table-slug">{p.category}</td>
+                  <td>
+                    <div className="admin-price-edit">
+                      <span>$</span>
+                      <input
+                        defaultValue={p.basePrice.toFixed(2)}
+                        onBlur={(e) => onUpdatePrice(p.id, e.target.value)}
+                        className="text-input text-input--small"
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="admin-block admin-block--form">
+        <h3 className="admin-block-title">Add New Product</h3>
+        <form onSubmit={handleAdd} className="admin-form">
+          <div className="form-group">
+            <label className="form-label">Name</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="text-input"
+              placeholder="Grip name"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Slug (optional)</label>
+            <input
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+              className="text-input"
+              placeholder="layerfit-grip-name"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Base Price (USD)</label>
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="text-input"
+              placeholder="31.00"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="text-input"
+            >
+              <option value="Sports">Sports</option>
+              <option value="handicap">Handicap</option>
+              <option value="household">Household</option>
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea
+              rows={3}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="text-input text-area"
+              placeholder="Short marketing description for the product"
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            Add Product (Demo)
+          </button>
+        </form>
+      </div>
+    </section>
+  );
+}
+
+// ---------- POLICY PAGES ----------
+
+function PrivacyPolicyPage() {
+  return (
+    <section className="text-section">
+      <h2 className="text-section-title">Privacy Policy</h2>
+      <p className="text-section-p"><strong>Last Updated: February 2026</strong></p>
+
+      <p className="text-section-p">
+        LayerFIT Studio (“we,” “our,” “us”) is committed to protecting your privacy. 
+        This Privacy Policy explains how we collect, use, and safeguard your information 
+        when you interact with our website or place an order.
+      </p>
+
+      <h3 className="text-section-subtitle">1. Information We Collect</h3>
+      <p className="text-section-p">
+        We collect only the information necessary to provide our services, including your name, 
+        email address, shipping address, order details, and any messages submitted through our 
+        contact form.
+      </p>
+      <p className="text-section-p">
+        <strong>Payment Information:</strong> We do not store or process payment card details directly. 
+        All payments are handled securely by our payment provider (e.g., Stripe).
+      </p>
+
+      <h3 className="text-section-subtitle">2. How We Use Your Information</h3>
+      <p className="text-section-p">
+        We use your information to process and ship your orders, contact you about your order, 
+        respond to support questions, improve our website and products, and send order updates or 
+        confirmations. We do not sell or rent your personal information to third parties.
+      </p>
+
+      <h3 className="text-section-subtitle">3. Sharing Your Information</h3>
+      <p className="text-section-p">
+        We only share your information with trusted service providers when necessary—such as payment 
+        processors, shipping carriers, and email providers. These services receive only the data required 
+        to perform their function.
+      </p>
+
+      <h3 className="text-section-subtitle">4. Cookies and Tracking</h3>
+      <p className="text-section-p">
+        Our website may use basic cookies or analytics tools to understand site traffic, improve 
+        functionality, and enhance user experience. You may disable cookies in your browser settings 
+        at any time.
+      </p>
+
+      <h3 className="text-section-subtitle">5. Data Retention</h3>
+      <p className="text-section-p">
+        We retain order information for recordkeeping and tax purposes. If you wish to have your 
+        information removed from our system (where legally permitted), email us at 
+        support@layerfitstudio.com.
+      </p>
+
+      <h3 className="text-section-subtitle">6. Your Rights</h3>
+      <p className="text-section-p">
+        You may request access to the personal data we hold, request corrections to inaccurate 
+        information, or request deletion of your information (where legally allowed). We will respond 
+        promptly to all valid requests.
+      </p>
+
+      <h3 className="text-section-subtitle">7. Children’s Privacy</h3>
+      <p className="text-section-p">
+        We do not knowingly collect personal information from children under the age of 13.
+      </p>
+
+      <h3 className="text-section-subtitle">8. Changes to This Policy</h3>
+      <p className="text-section-p">
+        We may update this Privacy Policy occasionally. The “Last Updated” date at the top of this page 
+        reflects the most recent revision.
+      </p>
+
+      <h3 className="text-section-subtitle">9. Contact Us</h3>
+      <p className="text-section-p">
+        If you have any questions about this Privacy Policy or how your information is used, please 
+        contact us at:<br />
+        <strong>support@layerfitstudio.com</strong><br />
+        LayerFIT Studio<br />
+        Syracuse, NY
+      </p>
+    </section>
+  );
+}
+
+function TermsPage() {
+  return (
+    <section className="text-section">
+      <h2 className="text-section-title">Terms &amp; Conditions</h2>
+      <p className="text-section-p"><strong>Last Updated: February 2026</strong></p>
+
+      <p className="text-section-p">
+        By placing an order with LayerFIT Studio (“we,” “our,” “us”), you agree that you are purchasing 
+        custom 3D-printed Sports accessories.
+      </p>
+
+      <h3 className="text-section-subtitle">1. Product Use &amp; Safety</h3>
+      <p className="text-section-p">
+        You are responsible for inspecting your grips before each use and ensuring that you use them in 
+        a safe and appropriate manner. Do not exceed reasonable load limits, modify the product, or use 
+        it with damaged or improperly maintained equipment. Misuse may result in damage or injury.
+      </p>
+
+      <h3 className="text-section-subtitle">2. Custom Product Orders</h3>
+      <p className="text-section-p">
+        All grips and accessories are custom-printed to order. Lead times, pricing, product availability, 
+        and materials may change. While we make every effort to keep our website information accurate, 
+        we reserve the right to correct errors, update product details, and cancel any order that contains 
+        obvious mistakes or incorrect pricing.
+      </p>
+
+      <h3 className="text-section-subtitle">3. Order Accuracy &amp; Payment</h3>
+      <p className="text-section-p">
+        You are responsible for ensuring that your order details (colors, initials, grip style, quantity, 
+        and shipping information) are correct at the time of purchase. Payment is processed securely through 
+        our payment provider. We do not store your payment card information.
+      </p>
+
+      <h3 className="text-section-subtitle">4. Limitations of Liability</h3>
+      <p className="text-section-p">
+        LayerFIT Studio is not liable for damages arising from improper use, modifications, or use of the 
+        products outside of normal gym environments. Our maximum liability is limited to the cost of the 
+        product you purchased.
+      </p>
+
+      <h3 className="text-section-subtitle">5. Changes to These Terms</h3>
+      <p className="text-section-p">
+        We may update these Terms &amp; Conditions periodically. The “Last Updated” date reflects the most 
+        recent version. Continued use of our site or products constitutes acceptance of the updated terms.
+      </p>
+
+      <h3 className="text-section-subtitle">6. Contact Us</h3>
+      <p className="text-section-p">
+        If you have any questions about these terms before placing an order, please contact us at:<br />
+        <strong>support@layerfitstudio.com</strong><br />
+        LayerFIT Studio<br />
+        Camillus, NY
+      </p>
+    </section>
+  );
+}
+
+function ShippingPolicyPage() {
+  return (
+    <section className="text-section">
+      <h2 className="text-section-title">Shipping Policy</h2>
+      <p className="text-section-p"><strong>Last Updated: February 2026</strong></p>
+
+      <h3 className="text-section-subtitle">1. Production Time</h3>
+      <p className="text-section-p">
+        Each LayerFIT grip and accessory is custom 3D-printed to order. Typical production time is 
+        a few business days, depending on order volume and the level of customization.
+      </p>
+
+      <h3 className="text-section-subtitle">2. Shipping Locations</h3>
+      <p className="text-section-p">
+        We currently ship within the United States only.
+      </p>
+
+      <h3 className="text-section-subtitle">3. Shipping Rates</h3>
+      <p className="text-section-p">
+        We offer a Free shipping . Once your order ships, you will 
+        receive a tracking number (where available) so you can monitor your shipment.
+      </p>
+
+      <h3 className="text-section-subtitle">4. Accuracy of Shipping Information</h3>
+      <p className="text-section-p">
+        Please double-check your shipping address before submitting your order. LayerFIT Studio is 
+        not responsible for delays, delivery failures, or lost packages caused by incorrect or incomplete 
+        addresses provided at checkout.
+      </p>
+
+      <h3 className="text-section-subtitle">5. Lost or Damaged Packages</h3>
+      <p className="text-section-p">
+        If your package arrives damaged or appears lost in transit, please contact us immediately. 
+        We will work with you to find an appropriate solution.
+      </p>
+
+      <h3 className="text-section-subtitle">6. Contact Us</h3>
+      <p className="text-section-p">
+        If you have questions about your shipment or need assistance, please contact us at:<br />
+        <strong>support@layerfitstudio.com</strong><br />
+        LayerFIT Studio<br />
+        Syracuse, NY
+      </p>
+    </section>
+  );
+}
+
+function ReturnsRefundsPage() {
+  return (
+    <section className="text-section">
+      <h2 className="text-section-title">Returns &amp; Refunds Policy</h2>
+      <p className="text-section-p"><strong>Last Updated: February 2026</strong></p>
+
+      <h3 className="text-section-subtitle">1. Custom-Made Products</h3>
+      <p className="text-section-p">
+        Because all LayerFIT grips and accessories are personalized and made to order, 
+        we generally cannot accept returns for change of mind, incorrect initials entered at checkout, 
+        or preference-related issues.
+      </p>
+
+      <h3 className="text-section-subtitle">2. Damaged or Defective Items</h3>
+      <p className="text-section-p">
+        If your grips arrive damaged, defective, or significantly different from what you ordered, 
+        please contact us as soon as possible. Include clear photos and a brief description of the 
+        issue so we can review your case quickly.
+      </p>
+
+      <h3 className="text-section-subtitle">3. Replacements &amp; Refunds</h3>
+      <p className="text-section-p">
+        We review each situation individually. When appropriate, we may offer a replacement or refund. 
+        Our goal is to ensure you feel confident training with LayerFIT gear.
+      </p>
+
+      <h3 className="text-section-subtitle">4. Warranty &amp; Usage Guidance</h3>
+      <p className="text-section-p">
+        If you have questions about the durability, expected use, or safe handling of your grips, 
+        please reach out to us before heavy use so we can guide you and help prevent avoidable issues.
+      </p>
+
+      <h3 className="text-section-subtitle">5. Contact Us</h3>
+      <p className="text-section-p">
+        For return inquiries, warranty concerns, or questions about your order, please contact us at:<br />
+        <strong>support@layerfitstudio.com</strong><br />
+        LayerFIT Studio<br />
+        Syracuse, NY
+      </p>
+    </section>
+  );
+}
