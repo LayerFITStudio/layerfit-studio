@@ -240,7 +240,7 @@ const handleStripeCheckout = async () => {
 
   const stripe = await stripePromise;
 
-  const response = await fetch("https://layerfit-api.onrender.com/create-checkout-session", {
+  const response = await fetch("https://layerfit-studio.onrender.com/create-checkout-session", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
