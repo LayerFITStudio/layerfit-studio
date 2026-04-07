@@ -35,8 +35,8 @@ app.post("/create-checkout-session", async (req, res) => {
   phone_number_collection: {
     enabled: true,
   },
-  success_url: "http://localhost:5173/?success=true",
-  cancel_url: "http://localhost:5173/?canceled=true",
+  success_url: "https://www.layerfitstudio.com/?success=true",
+cancel_url: "https://www.layerfitstudio.com/?canceled=true",
 });
     res.json({ url: session.url });
   } catch (err) {
