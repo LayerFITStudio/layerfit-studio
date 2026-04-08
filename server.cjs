@@ -28,6 +28,7 @@ app.post("/create-checkout-session", async (req, res) => {
   payment_method_types: ["card"],
   line_items,
   mode: "payment",
+  automatic_tax: { enabled: true },
   billing_address_collection: "required",
   shipping_address_collection: {
     allowed_countries: ["US"],
