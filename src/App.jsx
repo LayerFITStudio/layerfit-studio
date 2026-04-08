@@ -246,13 +246,19 @@ const handleStripeCheckout = async () => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      items: cartItems,
+      items: cartItems.map((item) => ({
+        name: item.product.name,
+        price: item.product.basePrice,
+        quantity: item.quantity,
+        color: item.color,
+        initials: item.initials,
+      })),
     }),
   });
 
   const session = await response.json();
 
-window.location.href = session.url;
+  window.location.href = session.url;
 };
   const subtotal = useMemo(
     () =>
