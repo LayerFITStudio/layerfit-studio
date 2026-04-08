@@ -13,16 +13,19 @@ app.post("/create-checkout-session", async (req, res) => {
   const { items } = req.body;
 
   try {
-    const line_items = items.map((item) => ({
-      price_data: {
-        currency: "usd",
-        product_data: {
-          name: item.product.name,
-        },
-        unit_amount: Math.round(item.product.basePrice * 100),
-      },
-      quantity: item.quantity,
-    }));
+   const line_items = items.map((item) => ({
+  price_data: {
+    currency: "usd",
+    product_data: {
+      name: item.name,
+      description: item.color
+        ? `Color: ${item.color}${item.initials ? " | Initials: " + item.initials : ""}`
+        : undefined,
+    },
+    unit_amount: Math.round(item.price * 100),
+  },
+  quantity: item.quantity,
+}));
 
     const session = await stripe.checkout.sessions.create({
   payment_method_types: ["card"],
