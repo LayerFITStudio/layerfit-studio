@@ -438,7 +438,7 @@ function SiteHeader({ currentPage, setPage, cartCount, isAdminAuthed }) {
     <header className="site-header">
       <div className="header-inner">
         <div className="brand">
-          <div className="brand-logo">
+          <div className="brand-logo" style={{ background: "transparent", boxShadow: "none" }}>
             <img
               src={logo3D}
               alt="LayerFIT Studio logo"
