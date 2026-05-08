@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 
 import logo3D from "./assets/layerfit-logo-3d.png";
@@ -108,13 +108,28 @@ const FLAT_SHIPPING = 0;
 // ---------- ROOT APP ----------
 
 export default function App() {
-  const [page, setPage] = useState("home");
-  const [activeCategory, setActiveCategory] = useState("Sports");
-  const [products, setProducts] = useState(initialProducts);
-  const [cartItems, setCartItems] = useState([]);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+const [page, setPage] = useState("home");
+const [activeCategory, setActiveCategory] = useState("Sports");
+const [products, setProducts] = useState(initialProducts);
+const [cartItems, setCartItems] = useState([]);
+const [selectedProduct, setSelectedProduct] = useState(null);
+const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
 
+  if (params.get("success") === "true") {
+    setShowSuccessMessage(true);
+
+    // remove ?success=true from URL
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    // auto-hide after 5 seconds
+    setTimeout(() => {
+      setShowSuccessMessage(false);
+    }, 5000);
+  }
+}, []);
   // Simple admin auth (local only, password hardcoded for now)
   const [isAdminAuthed, setIsAdminAuthed] = useState(() => {
     try {
@@ -225,7 +240,7 @@ const handleStripeCheckout = async () => {
 
   const stripe = await stripePromise;
 
-  const response = await fetch("http://localhost:4242/create-checkout-session", {
+  const response = await fetch("https://layerfit-api.onrender.com/create-checkout-session", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -262,6 +277,23 @@ window.location.href = session.url;
       />
 
       <main className="site-main">
+      {showSuccessMessage && (
+  <div
+    style={{
+      background: "#1f3b2d",
+      color: "#ffffff",
+      padding: "20px 18px",
+      lineHeight: "1.5",
+      borderRadius: "10px",
+      marginTop: "20px",
+      marginBottom: "20px",
+      textAlign: "center",
+      fontWeight: 600,
+    }}
+    >
+    Payment successful! You will receive an email confirmation shortly.
+  </div>
+)}
         {page === "home" && (
           <HomePage
             setPage={setPage}
@@ -389,17 +421,6 @@ function SiteHeader({ currentPage, setPage, cartCount, isAdminAuthed }) {
           {navLink("about", "About")}
           {navLink("contact", "Contact")}
 
-          <button
-            onClick={() => setPage(isAdminAuthed ? "admin" : "admin-login")}
-            className={
-              "nav-link" +
-              (currentPage === "admin" || currentPage === "admin-login"
-                ? " nav-link--active"
-                : "")
-            }
-          >
-            Admin
-          </button>
 
           <button onClick={() => setPage("cart")} className="nav-cart">
             <span>Cart</span>

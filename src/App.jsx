@@ -11,6 +11,8 @@ import fairwayBlack from "./assets/fairway-black.png";
 import fairwayBlue from "./assets/fairway-blue.png";
 import fairwayGrey from "./assets/fairway-grey.png";
 import fairwayPink from "./assets/fairway-pink.png";
+import scoreCaddyImage from "./assets/score-caddy.jpg";
+import stanleyBowlImage from "./assets/stanley-bowl.png";
 import standardGripPlaceholder from "./assets/standard-grip-placeholder.png";
 import bulgeGripPlaceholder from "./assets/bulge-grip-placeholder.png";
 import fatGripPlaceholder from "./assets/fat-grip-placeholder.png";
@@ -92,6 +94,28 @@ const initialProducts = [
   images: [fairway6packImage, fairway6Dimensions],
   colors: fairwayColorOptions,
 },
+{
+  id: 5,
+  name: "Score Caddy",
+  slug: "score-caddy",
+  basePrice: 26.99,
+  category: "Sports",
+  description:
+    "A compact golf accessory featuring pencil storage, sharpeners, brush attachment, and retractable carabiner for easy access on the course.",
+  images: [scoreCaddyImage],
+  colors: fairwayColorOptions,
+},
+{
+  id: 6,
+  name: "Stanley Snack Bowl",
+  slug: "stanley-snack-bowl",
+  basePrice: 24.99,
+  category: "household",
+  description:
+    "A custom-fit snack bowl designed for the Stanley 40oz tumbler. Perfect for snacks, candy, and everyday convenience.",
+  images: [stanleyBowlImage],
+  colors: fairwayColorOptions,
+},
 ];
 
 const colorOptions = [
@@ -168,7 +192,15 @@ useEffect(() => {
     const product = products.find((p) => p.id === productId);
     if (!product) return;
 
-   if (!color || (product.slug !== "fairway-6-pack" && !initials)) {
+ if (
+  !color ||
+  (
+    product.slug !== "fairway-6-pack" &&
+    product.slug !== "score-caddy" &&
+    product.slug !== "stanley-snack-bowl" &&
+    !initials
+  )
+) {
   alert("Please choose a color and enter initials.");
   return;
 }
@@ -296,8 +328,7 @@ const handleStripeCheckout = async () => {
       textAlign: "center",
       fontWeight: 600,
     }}
-  >
-  >
+    >
     Payment successful! You will receive an email confirmation shortly.
   </div>
 )}
@@ -508,9 +539,9 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
               }
               onClick={() => {
                 setActiveCategory(cat.id);
-                if (cat.id === "Sports") {
-                  setPage("shop");
-                }
+                if (cat.id === "Sports" || cat.id === "household") {
+                 setPage("shop");
+              }
               }}
             >
               <div className="home-category-header">
@@ -910,7 +941,9 @@ function ProductCard({ product, onAddToCart }) {
             </div>
           </div>
 
-          {product.slug !== "fairway-6-pack" && (
+          {product.slug !== "fairway-6-pack" &&
+          product.slug !== "score-caddy" &&
+          product.slug !== "stanley-snack-bowl" && (
             <div className="form-group">
               <label className="form-label">
                 Initials <span className="form-label-hint">(2–4 letters)</span>
