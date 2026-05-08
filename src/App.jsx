@@ -904,8 +904,11 @@ function ProductCard({ product, onAddToCart }) {
             <span className="product-price-note">
               {" "}
               {product.slug === "fairway-6-pack"
-                ? "(includes 3 tees & carabiner)"
-                : "(per pair • includes carabiner)"}
+  ? "(includes 3 tees & carabiner)"
+  : product.slug === "score-caddy" ||
+    product.slug === "stanley-snack-bowl"
+  ? ""
+  : "(per pair • includes carabiner)"}
             </span>
           </p>
         </div>
