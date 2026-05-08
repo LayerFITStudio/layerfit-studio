@@ -41,7 +41,7 @@ const categories = [
   {
     id: "household",
     label: "Household",
-    tagline: "Coming soon",
+    tagline: "Household Accessories",
     description: "Simple, smart 3D-printed helpers for everyday life.",
   },
 ];
