@@ -109,7 +109,7 @@ const initialProducts = [
   id: 6,
   name: "Stanley Snack Bowl",
   slug: "stanley-snack-bowl",
-  basePrice: 24.99,
+  basePrice: 14.99,
   category: "household",
   description:
     "A custom-fit snack bowl designed for the Stanley 40oz tumbler. Perfect for snacks, candy, and everyday convenience.",
