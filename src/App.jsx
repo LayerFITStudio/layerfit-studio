@@ -98,7 +98,7 @@ const initialProducts = [
   id: 5,
   name: "Score Caddy",
   slug: "score-caddy",
-  basePrice: 26.99,
+  basePrice: 29.99,
   category: "Sports",
   description:
     "A compact golf accessory featuring pencil storage, sharpeners, brush attachment, and retractable carabiner for easy access on the course.",
