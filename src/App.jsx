@@ -865,8 +865,10 @@ function ProductCard({ product, onAddToCart }) {
   const [quantity, setQuantity] = useState(1);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
-  const currentColor =
-    colorOptions.find((c) => c.value === color) || colorOptions[0];
+  const availableColors = product.colors || colorOptions;
+
+const currentColor =
+  availableColors.find((c) => c.value === color) || availableColors[0];
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -919,7 +921,7 @@ function ProductCard({ product, onAddToCart }) {
 
             <div className="color-picker-row">
               <div className="color-pill-row">
-                {(product.colors || colorOptions).map((c) => (
+                {availableColors.map((c) => (
                   <button
                     key={c.value}
                     type="button"
