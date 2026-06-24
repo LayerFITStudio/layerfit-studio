@@ -637,30 +637,54 @@ function AboutPage() {
   return (
     <section className="home-grid home-grid--single">
       <div className="home-copy">
-        <p className="home-kicker">About LayerFIT Studio</p>
+        <p className="home-kicker">ABOUT LAYERFIT STUDIO</p>
 
-        <h2 className="home-title">Solving real gym problems, one layer at a time.</h2>
+<h2 className="home-title">
+  Innovative Solutions Designed & Manufactured One Layer at a Time.
+</h2>
 
-        <p className="home-lead">
-          LayerFIT Studio was started by lifelong training partners who were tired of
-          mismatched, worn-out cable attachments at the gym. We design and 3D-print
-          custom cable grips that actually fit your hands, your training style, and
-          your personality.
-        </p>
+<p className="home-lead">
+  LayerFIT Studio was founded on a simple idea: identify everyday challenges and create practical, innovative solutions through design and 3D manufacturing.
+</p>
 
-        <div style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
-          <p className="home-note">
-            • Personalized grips with your initials, color choice, and grip style.
-          </p>
-          <p className="home-note">
-            • Designed by lifters with decades of training experience – not a catalog.
-          </p>
-          <p className="home-note">
-            • Printed in-house on high-precision 3D printers for repeatable quality.
-          </p>
-        </div>
+<p className="home-lead">
+  What started with custom fitness accessories has evolved into a growing product company focused on sports, household, and adaptive living solutions. Every product begins with a problem worth solving and is developed, tested, and manufactured in-house using advanced 3D-printing technology.
+</p>
 
-        <div style={{ marginTop: "24px" }}>
+<p className="home-lead">
+  Whether it's helping golfers stay organized on the course, creating smarter household products, or developing adaptive solutions that make daily tasks easier, our mission remains the same: build useful products that improve everyday life.
+</p>
+
+<div style={{ display: "grid", gap: "12px", marginTop: "16px" }}>
+  <p className="home-note">
+    • Designed and manufactured in-house in New York.
+  </p>
+
+  <p className="home-note">
+    • Rapid product development from concept to finished product.
+  </p>
+
+  <p className="home-note">
+    • Customization and personalization options on select products.
+  </p>
+
+  <p className="home-note">
+    • Small-batch production with a focus on quality and innovation.
+  </p>
+
+  <p className="home-note">
+    • Continually expanding product lines for sports, household, and adaptive living applications.
+  </p>
+</div>
+
+<h3 style={{ marginTop: "30px", color: "#ffffff" }}>
+  Our Vision
+</h3>
+
+<p className="home-lead">
+  To become a trusted source for innovative, problem-solving products that improve the way people train, play, work, and live.
+</p>
+
           <button
             className="btn btn-primary"
             onClick={() => {
@@ -672,8 +696,7 @@ function AboutPage() {
             Back to Top
           </button>
         </div>
-      </div>
-    </section>
+       </section>
   );
 }
 function ContactPage() {
