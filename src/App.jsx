@@ -9,7 +9,7 @@ import gripRed from "./assets/grip-red.png";
 import gripPink from "./assets/grip-pink.png";
 import fairwayBlack from "./assets/fairway-black.png";
 import fairwayBlue from "./assets/fairway-blue.png";
-import fairwayGrey from "./assets/fairway-grey.png";
+import fairwayGrey from "./assets/fairway-grey-v2.png";
 import fairwayPink from "./assets/fairway-pink.png";
 import scoreCaddyImage from "./assets/score-caddy.jpg";
 import stanleyBowlImage from "./assets/stanley-bowl.png";
