@@ -555,9 +555,8 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
         </div>
 
         <p className="home-note">
-          Start with Sports today — Handicap and Household products are coming
-          soon.
-        </p>
+          Explore our growing collection of Sports, Household, and Adaptive Living solutions.
+      </p>
 
         {/* 3D Printer + Grips Section (Side-by-side, Grip Preview Style) */}
         <div style={{ marginTop: "40px" }}>
@@ -570,7 +569,7 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
             <div className="home-preview-card">
               <div style={{ display: "grid", gap: "20px" }}>
                 <h3 className="home-feature-title" style={{ margin: 0 }}>
-                  Built in our studio. Designed for real training.
+                  Designed, Manufactured & Personalized In-House.
                 </h3>
 
                 <div
@@ -622,9 +621,9 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
                 </div>
 
                 <p className="home-feature-text" style={{ margin: 0 }}>
-                  Every LayerFIT grip is printed in our studio using precision
-                  3D manufacturing technology — giving us full control over
-                  quality, durability, and personalization from start to finish.
+                  Every LayerFIT product is designed and manufactured in our studio using precision
+                  3D-printing technology — giving us complete control over quality,
+                  durability, and customization from concept to finished product.
                 </p>
               </div>
             </div>
