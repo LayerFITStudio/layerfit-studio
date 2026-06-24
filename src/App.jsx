@@ -507,16 +507,17 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
   return (
     <section className="home-grid home-grid--single">
       <div className="home-copy">
-        <p className="home-kicker">3D-Printed Cable Attachments</p>
+        <p className="home-kicker">3D DESIGN & PRINTED SOLUTIONS</p>
 
         <h2 className="home-title">
           Innovative Solutions Solved & Printed 1 Layer at a time.
         </h2>
 
         <p className="home-lead">
-          LayerFIT Studio custom-prints everything to your specs: model,
-          color, and your initials etched right into the solution. Designed 
-          and manufactured here in the USA.
+          LayerFIT Studio designs, manufactures, and
+          personlaizes innovative 3D-printed solutions 
+          for sports, accesibility, and everyday living,
+          proudly made in the USA.
         </p>
 
         <div className="home-actions">
