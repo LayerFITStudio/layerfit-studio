@@ -1068,10 +1068,9 @@ function CartPage({
     return (
       <section className="cart-empty">
         <h2 className="cart-title">Your Cart</h2>
-        <p className="cart-empty-text">
-          No grips in your cart yet. Hit the shop and build your first custom
-          handle.
-        </p>
+        <p className="cart-empty">
+  Your cart is currently empty. Visit the Shop to discover innovative products designed and manufactured by LayerFIT Studio.
+</p>
       </section>
     );
   }
