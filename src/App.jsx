@@ -101,7 +101,7 @@ const initialProducts = [
   basePrice: 29.99,
   category: "Sports",
   description:
-    "A compact golf accessory featuring pencil storage, sharpeners, brush attachment, and retractable carabiner for easy access on the course.",
+    "A compact golf accessory featuring pencil storage, sharpeners, ball marker, brush attachment, and retractable carabiner for easy access on the course.",
   images: [scoreCaddyImage],
   colors: fairwayColorOptions,
 },
@@ -907,8 +907,9 @@ const currentColor =
               {" "}
               {product.slug === "fairway-6-pack"
   ? "(includes 3 tees & carabiner)"
-  : product.slug === "score-caddy" ||
-    product.slug === "stanley-snack-bowl"
+  : product.slug === "score-caddy"
+  ? "(includes 2 pencils, carabiner & ball marker)"
+  : product.slug === "stanley-snack-bowl"
   ? ""
   : "(per pair • includes carabiner)"}
             </span>
