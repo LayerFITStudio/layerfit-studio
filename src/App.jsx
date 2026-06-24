@@ -22,6 +22,7 @@ import fairway6packImage from "./assets/fairway_6_pack.jpg";
 import gripDimensions from "./assets/grip_dimensions.png";
 import fairway6Dimensions from "./assets/fairway6_dimensions.png";
 import gripInitials from "./assets/grip_initials.png";
+import homeHeroProducts from "./assets/home-hero-products.png";
 // ---------- INITIAL DATA ----------
 
 const categories = [
@@ -510,13 +511,12 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
         <p className="home-kicker">3D DESIGN & PRINTED SOLUTIONS</p>
 
         <h2 className="home-title">
-          Innovative Solutions Solved & Printed 1 Layer at a time.
+          Innovative Solutions Designed & Printed One Layer at a Time.
         </h2>
 
         <p className="home-lead">
-          LayerFIT Studio designs, manufactures, and
-          personlaizes innovative 3D-printed solutions 
-          for sports, accesibility, and everyday living,
+          LayerFIT Studio designs, manufactures, and personalizes innovative
+          3D-printed solutions for sports, accessibility, and everyday living,
           proudly made in the USA.
         </p>
 
@@ -524,41 +524,45 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
           <button onClick={() => setPage("shop")} className="btn btn-primary">
             Shop Sports
           </button>
+
           <button onClick={() => setPage("about")} className="btn btn-ghost">
             Our Story
           </button>
         </div>
 
-        {/* Category tiles */}
         <div className="home-category-grid">
           {categories.map((cat) => (
             <button
               key={cat.id}
               className={
                 "home-category-card" +
-                (activeCategory === cat.id ? " home-category-card--active" : "")
+                (activeCategory === cat.id
+                  ? " home-category-card--active"
+                  : "")
               }
               onClick={() => {
                 setActiveCategory(cat.id);
+
                 if (cat.id === "Sports" || cat.id === "household") {
-                 setPage("shop");
-              }
+                  setPage("shop");
+                }
               }}
             >
               <div className="home-category-header">
                 <span className="home-category-label">{cat.label}</span>
                 <span className="home-category-tagline">{cat.tagline}</span>
               </div>
+
               <p className="home-category-description">{cat.description}</p>
             </button>
           ))}
         </div>
 
         <p className="home-note">
-          Explore our growing collection of Sports, Household, and Adaptive Living solutions.
-      </p>
+          Explore our growing collection of Sports, Household, and Adaptive
+          Living solutions.
+        </p>
 
-        {/* 3D Printer + Grips Section (Side-by-side, Grip Preview Style) */}
         <div style={{ marginTop: "40px" }}>
           <p className="home-kicker" style={{ marginBottom: "10px" }}>
             In-House Manufacturing
@@ -566,6 +570,7 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
 
           <div className="home-preview">
             <div className="home-preview-glow" />
+
             <div className="home-preview-card">
               <div style={{ display: "grid", gap: "20px" }}>
                 <h3 className="home-feature-title" style={{ margin: 0 }}>
@@ -574,56 +579,27 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fit, minmax(260px, 1fr))",
-                    gap: "20px",
-                    alignItems: "center",
+                    borderRadius: "18px",
+                    overflow: "hidden",
+                    border: "1px solid #1f2937",
                   }}
                 >
-                  <div
+                  <img
+                    src={homeHeroProducts}
+                    alt="LayerFIT Studio product lineup"
                     style={{
-                      borderRadius: "18px",
-                      overflow: "hidden",
-                      border: "1px solid #1f2937",
+                      width: "100%",
+                      display: "block",
+                      margin: "0 auto",
                     }}
-                  >
-                    <img
-                      src={printerImage}
-                      alt="LayerFIT Studio 3D Printer"
-                      style={{
-                        width: "100%",
-                        maxWidth: "400px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                  </div>
-
-                  <div
-                    style={{
-                      borderRadius: "18px",
-                      overflow: "hidden",
-                      border: "1px solid #1f2937",
-                    }}
-                  >
-                    <img
-                      src={homeGripsImage}
-                      alt="LayerFIT Grip lineup"
-                      style={{
-                        width: "100%",
-                        maxWidth: "400px",
-                        display: "block",
-                        margin: "0 auto",
-                      }}
-                    />
-                  </div>
+                  />
                 </div>
 
                 <p className="home-feature-text" style={{ margin: 0 }}>
-                  Every LayerFIT product is designed and manufactured in our studio using precision
-                  3D-printing technology — giving us complete control over quality,
-                  durability, and customization from concept to finished product.
+                  Every LayerFIT product is designed and manufactured in our
+                  studio using precision 3D-printing technology — giving us
+                  complete control over quality, durability, and customization
+                  from concept to finished product.
                 </p>
               </div>
             </div>
@@ -633,6 +609,7 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
     </section>
   );
 }
+
 function AboutPage() {
   return (
     <section className="home-grid home-grid--single">
