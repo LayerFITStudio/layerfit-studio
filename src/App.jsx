@@ -758,8 +758,8 @@ function ContactPage() {
     <section className="text-section">
       <h2 className="text-section-title">Contact LayerFIT Studio</h2>
       <p className="text-section-p">
-        Have a question about custom grips, bulk orders, or something else?
-        Use the form below and we&apos;ll get back to you as soon as we can.
+        Have a question about our products, custom designs, bulk orders, or a product idea?
+        We'd love to hear from you. Use the form below and we'll get back to you soon as possible.
       </p>
 
       <form className="contact-form" onSubmit={handleSubmit}>
