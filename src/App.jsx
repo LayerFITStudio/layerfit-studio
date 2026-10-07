@@ -23,6 +23,7 @@ import gripDimensions from "./assets/grip_dimensions.png";
 import fairway6Dimensions from "./assets/fairway6_dimensions.png";
 import gripInitials from "./assets/grip_initials.png";
 import homeHeroProducts from "./assets/home-hero-products.png";
+import elfieMemoryTreeImage from "./assets/Elfie_Memory_Tree.png";
 // ---------- INITIAL DATA ----------
 
 const categories = [
@@ -34,10 +35,10 @@ const categories = [
       "Custom 3D-printed sporting accesories.",
   },
   {
-    id: "handicap",
-    label: "Handicap",
-    tagline: "Coming soon",
-    description: "Adaptive solutions designed to reduce everyday friction.",
+    id: "holiday",
+    label: "Holiday",
+    tagline: "Make the Holidays More Memorable",
+    description: "Unique 3D-printed holiday creations designed to bring fun, memories, and tradition to your family.",
   },
   {
     id: "household",
@@ -116,6 +117,16 @@ const initialProducts = [
     "A custom-fit snack bowl designed for the Stanley 40oz tumbler. Perfect for snacks, candy, and everyday convenience.",
   images: [stanleyBowlImage],
   colors: fairwayColorOptions,
+},
+{
+  id: 7,
+  name: "Elfie Memory Tree",
+  slug: "elfie-memory-tree",
+  basePrice: 95.00,
+  category: "holiday",
+  description:
+    "Create lasting holiday memories with the Elfie Memory Tree. A unique 3D-printed Christmas display designed to showcase your Elf and capture those special holiday moments year after year.",
+  images: [elfieMemoryTreeImage],
 },
 ];
 
@@ -199,6 +210,7 @@ useEffect(() => {
     product.slug !== "fairway-6-pack" &&
     product.slug !== "score-caddy" &&
     product.slug !== "stanley-snack-bowl" &&
+    product.slug !== "elfie-memory-tree" &&
     !initials
   )
 ) {
@@ -283,7 +295,7 @@ const handleStripeCheckout = async () => {
         name: item.product.name,
         price: item.product.basePrice,
         quantity: item.quantity,
-        color: item.color,
+        color: item.product.slug === "elfie-memory-tree" ? "" : item.color,
         initials: item.initials,
       })),
     }),
@@ -543,7 +555,7 @@ function HomePage({ setPage, activeCategory, setActiveCategory }) {
               onClick={() => {
                 setActiveCategory(cat.id);
 
-                if (cat.id === "Sports" || cat.id === "household") {
+                if (cat.id === "Sports" || cat.id === "household" || cat.id === "holiday") {
                   setPage("shop");
                 }
               }}
@@ -821,6 +833,7 @@ function ShopPage({ products, activeCategory, onAddToCart, onBackToHome }) {
   return (
     <section className="shop-section">
       <div className="shop-header">
+        {activeCategory !== "holiday" && (
         <div>
           <h2 className="shop-title">Shop Cable Grips</h2>
           <p className="shop-lead">
@@ -832,7 +845,7 @@ function ShopPage({ products, activeCategory, onAddToCart, onBackToHome }) {
             line evolves.
           </p>
         </div>
-
+)}
         <div>
           <button className="btn btn-ghost" onClick={onBackToHome}>
             ← Back to Home
@@ -889,15 +902,17 @@ const currentColor =
   />
 </div>
 
-<p className="product-image-note">
-  Choose your color below •{" "}
-  <span style={{ color: "#ffffff", fontWeight: 600 }}>
-    Click image to view
-    {product.slug === "fairway-6-pack"
-      ? " dimensions"
-      : " dimensions & personalization"}
-  </span>
-</p>
+{product.slug !== "elfie-memory-tree" && (
+  <p className="product-image-note">
+    Choose your color below •{" "}
+    <span style={{ color: "#ffffff", fontWeight: 600 }}>
+      Click image to view{" "}
+      {product.slug === "fairway-6-pack"
+        ? "dimensions"
+        : "dimensions & personalization"}
+    </span>
+  </p>
+)}
           <h3 className="product-name">{product.name}</h3>
           <p className="product-description">{product.description}</p>
 
@@ -911,12 +926,15 @@ const currentColor =
   ? "(includes 2 pencils, carabiner & ball marker)"
   : product.slug === "stanley-snack-bowl"
   ? ""
+  : product.slug === "elfie-memory-tree"
+  ? ""
   : "(per pair • includes carabiner)"}
             </span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="product-form">
+          {product.slug !== "elfie-memory-tree" && (
           <div className="form-group">
             <label className="form-label">Color</label>
 
@@ -945,11 +963,12 @@ const currentColor =
                 />
               </div>
             </div>
-          </div>
-
+             </div>
+              )}
           {product.slug !== "fairway-6-pack" &&
           product.slug !== "score-caddy" &&
-          product.slug !== "stanley-snack-bowl" && (
+          product.slug !== "stanley-snack-bowl" &&
+          product.slug !== "elfie-memory-tree" && (
             <div className="form-group">
               <label className="form-label">
                 Initials <span className="form-label-hint">(2–4 letters)</span>
@@ -1084,13 +1103,15 @@ function CartPage({
           <div key={item.id} className="cart-item">
             <div className="cart-item-main">
               <p className="cart-item-name">{item.product.name}</p>
-              <p className="cart-item-meta">
-                Color:{" "}
-                {
-                  (allColorOptions.find((c) => c.value === item.color) || {}).label
-                }
-                {" • "}Initials: {item.initials}
-              </p>
+              {item.product.slug !== "elfie-memory-tree" && (
+  <p className="cart-item-meta">
+    Color:{" "}
+    {
+      (allColorOptions.find((c) => c.value === item.color) || {}).label
+    }
+    {" • "}Initials: {item.initials}
+  </p>
+)}
             </div>
             <div className="cart-item-controls">
               <div className="cart-qty-group">
@@ -1604,7 +1625,7 @@ function AdminPage({ products, onUpdatePrice, onAddProduct, onLogout }) {
               className="text-input"
             >
               <option value="Sports">Sports</option>
-              <option value="handicap">Handicap</option>
+              <option value="holiday">Holiday</option>
               <option value="household">Household</option>
             </select>
           </div>
